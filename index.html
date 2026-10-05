@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casinodé</title>
+    <link rel="icon" type="image/png" href="Logo.png">
+    <style>
+        :root {
+            --bg-color: #2600ff;
+            --card-color: #93beff;
+            --primary-color: #19cf19;
+            --success-color: #19cf19;
+            --error-color: #ff4757;
+            --text-dark: #ffffff;
+            --text-light: #ffffff;
+            --dice-dot-color: #ffffff;
+            --dice-one-color: #ffffff;
+            --taille: 150px;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            text-align: center;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 10px;
+            color: var(--text-dark);
+        }
+
+        /* Carte : tout est centré, les paris sont posés en haut à droite */
+        .container {
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr;
+            justify-items: center;
+            align-content: start;
+            background-color: var(--card-color);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            min-height: calc(100vh - 20px);
+            box-sizing: border-box;
+        }
+
+        .logo-titre {
+            display: block;
+            margin: 0 auto 15px auto;
+            max-width: 100%;
+            height: auto;
+            max-height: 120px;
+        }
+
+        .cagnotte-box {
+            font-size: 24px;
+            font-weight: bold;
+            background-color: #0d73d3;
+            color: #f1c40f;
+            padding: 10px 24px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .mise-section {
+            background-color: #0d73d3;
+            border: 2px dashed #0d73d3;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+
+        .mise-section input {
+            font-size: 18px;
+            padding: 8px 12px;
+            width: 80px;
+            text-align: center;
+            border: 2px solid var(--primary-color);
+            border-radius: 6px;
+            margin: 0 10px;
+        }
+
+        #boutonLancer {
+            padding: 16px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(213, 46, 46, 0.4);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        #boutonLancer:disabled {
+            background-color: #19cf19;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        #messageFeedback {
+            margin: 25px 0;
+            min-height: 25px;
+            font-size: 20px;
+            color: #ffffff;
+        }
+
+        /* Dés */
+        .plateau {
+            display: flex;
+            gap: 60px;
+            justify-content: center;
+            margin: 30px 0 0 0;
+        }
+
+        .zone-de p {
+            margin: 0 0 25px 0;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .scene {
+            width: var(--taille);
+            height: var(--taille);
+            perspective: calc(var(--taille) * 6);
+            margin: 5px auto;
+        }
+
+        .cube {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1.5s cubic-bezier(0.2, 0.8, 0.3, 1);
+            transform: rotateX(0deg) rotateY(0deg);
+        }
+
+        .face {
+            position: absolute;
+            width: var(--taille);
+            height: var(--taille);
+            background: #0d73d3;
+            border: 2px solid #ddd;
+            border-radius: calc(var(--taille) * 0.18);
+            box-shadow: inset 0 0 15px rgba(243, 240, 240, 0.1), 0 3px 6px rgba(0,0,0,0.05);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            padding: calc(var(--taille) * 0.1);
+            box-sizing: border-box;
+            backface-visibility: hidden;
+        }
+
+        .point {
+            display: block;
+            width: calc(var(--taille) * 0.14);
+            height: calc(var(--taille) * 0.14);
+            border-radius: 50%;
+            background-color: var(--dice-dot-color);
+            margin: auto;
+        }
+
+        .face-1 .point {
+            background-color: var(--dice-one-color);
+            width: calc(var(--taille) * 0.2);
+            height: calc(var(--taille) * 0.2);
+        }
+
+        .face-1 { transform: rotateY(0deg)   translateZ(calc(var(--taille) / 2)); }
+        .face-6 { transform: rotateY(180deg) translateZ(calc(var(--taille) / 2)); }
+        .face-3 { transform: rotateY(90deg)  translateZ(calc(var(--taille) / 2)); }
+        .face-4 { transform: rotateY(-90deg) translateZ(calc(var(--taille) / 2)); }
+        .face-2 { transform: rotateX(90deg)  translateZ(calc(var(--taille) / 2)); }
+        .face-5 { transform: rotateX(-90deg) translateZ(calc(var(--taille) / 2)); }
+
+        .face-1 .point { grid-area: 2 / 2; }
+        .face-2 .point:nth-child(1) { grid-area: 1 / 1; }
+        .face-2 .point:nth-child(2) { grid-area: 3 / 3; }
+        .face-3 .point:nth-child(1) { grid-area: 1 / 1; }
+        .face-3 .point:nth-child(2) { grid-area: 2 / 2; }
+        .face-3 .point:nth-child(3) { grid-area: 3 / 3; }
+        .face-4 .point:nth-child(1) { grid-area: 1 / 1; }
+        .face-4 .point:nth-child(2) { grid-area: 1 / 3; }
+        .face-4 .point:nth-child(3) { grid-area: 3 / 1; }
+        .face-4 .point:nth-child(4) { grid-area: 3 / 3; }
+        .face-5 .point:nth-child(1) { grid-area: 1 / 1; }
+        .face-5 .point:nth-child(2) { grid-area: 1 / 3; }
+        .face-5 .point:nth-child(3) { grid-area: 2 / 2; }
+        .face-5 .point:nth-child(4) { grid-area: 3 / 1; }
+        .face-5 .point:nth-child(5) { grid-area: 3 / 3; }
+        .face-6 .point:nth-child(1) { grid-area: 1 / 1; }
+        .face-6 .point:nth-child(2) { grid-area: 1 / 3; }
+        .face-6 .point:nth-child(3) { grid-area: 2 / 1; }
+        .face-6 .point:nth-child(4) { grid-area: 2 / 3; }
+        .face-6 .point:nth-child(5) { grid-area: 3 / 1; }
+        .face-6 .point:nth-child(6) { grid-area: 3 / 3; }
+
+        /* Paris : en haut à droite, en petit */
+        .paris-section {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            width: 300px;
+            margin: 0;
+            text-align: left;
+        }
+
+        .paris-section h3 {
+            margin: 0 0 8px 0;
+            font-size: 12px;
+            color: var(--text-light);
+            text-transform: uppercase;
+        }
+
+        .paris-row {
+            background: #0d73d3;
+            padding: 8px 10px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border: 1px solid #0d73d3;
+            border-left: 5px solid #0d73d3;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .paris-row.active {
+            border-left-color: var(--primary-color);
+        }
+
+        .cote-badge {
+            background: #19cf19;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        select, input[type="number"] {
+            padding: 3px 6px;
+            border-radius: 6px;
+            border: 1px solid #a13535;
+            background: white;
+            font-size: 12px;
+        }
+
+        /* Écrans moyens : les paris repassent dans le flux, sous le message */
+        @media (max-width: 1200px) {
+            .paris-section {
+                position: static;
+                width: 100%;
+                max-width: 500px;
+                margin: 20px 0 0 0;
+                order: 10;
+            }
+        }
+
+        /* Téléphone : dés plus petits */
+        @media (max-width: 800px) {
+            :root {
+                --taille: 110px;
+            }
+            .plateau {
+                gap: 30px;
+            }
+        }
+    
+        /* Grands écrans : tout grandit avec la fenêtre */
+        @media (min-width: 1201px) {
+            :root {
+                --taille: clamp(130px, 12vw, 250px);
+            }
+
+            .container {
+                grid-template-rows: repeat(5, auto) 1fr;
+            }
+
+            .logo-titre {
+                max-height: clamp(120px, 16vh, 240px);
+            }
+
+            .mise-section,
+            #boutonLancer {
+                max-width: clamp(500px, 45vw, 850px);
+            }
+
+            #messageFeedback {
+                font-size: clamp(20px, 2vw, 34px);
+            }
+
+            .plateau {
+                align-self: center;
+                gap: clamp(60px, 8vw, 220px);
+                margin: 0;
+            }
+
+            .zone-de p {
+                font-size: clamp(22px, 1.8vw, 32px);
+            }
+
+            .paris-section {
+                width: clamp(300px, 24vw, 460px);
+            }
+
+            .paris-section h3 {
+                font-size: clamp(12px, 1vw, 18px);
+            }
+
+            .paris-row {
+                font-size: clamp(12px, 1vw, 18px);
+            }
+
+            select, input[type="number"] {
+                font-size: clamp(12px, 1vw, 18px);
+            }
+        }
+    
+        /* ===== Boutons de mise rapide ===== */
+        .mise-rapide {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .mise-rapide button {
+            padding: 6px 18px;
+            border: none;
+            border-radius: 16px;
+            background: #ffffff;
+            color: #0d73d3;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .mise-rapide button:hover:not(:disabled) {
+            background: #dcebff;
+        }
+
+        .mise-rapide button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ===== Panneaux (historique, statistiques, gains) ===== */
+        .zone-bas {
+            display: grid;
+            grid-template-columns: 1fr;
+            justify-items: center;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .zone-bas .plateau { order: 1; }
+        .zone-bas #panneauStats { order: 2; }
+        .zone-bas #panneauGains { order: 3; }
+
+        .panneau {
+            background: #0d73d3;
+            border-radius: 10px;
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 13px;
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .panneau h3 {
+            margin: 0 0 8px 0;
+            font-size: 12px;
+            color: var(--text-light);
+            text-transform: uppercase;
+        }
+
+        .liste-stats,
+        #listeHistorique {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .liste-stats li,
+        #listeHistorique li {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .liste-stats li:last-child,
+        #listeHistorique li:last-child {
+            border-bottom: none;
+        }
+
+        #listeHistorique li.gagne strong { color: #b5ffb5; }
+        #listeHistorique li.perdu strong { color: #ffc2c7; }
+        #listeHistorique li { flex-wrap: wrap; }
+        #listeHistorique li.vide { opacity: 0.8; }
+
+        .table-gains {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table-gains td {
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .table-gains tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-gains td:nth-child(2) {
+            text-align: center;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+
+        .table-gains td:last-child {
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .historique { order: 11; }
+
+        /* Grands écrans : stats à gauche des dés, gains à droite, historique en haut à gauche */
+        @media (min-width: 1201px) {
+            .zone-bas {
+                grid-template-columns: 1fr auto 1fr;
+                align-self: center;
+            }
+
+            .zone-bas .plateau { order: 0; grid-column: 2; }
+            .zone-bas #panneauStats { order: 0; grid-column: 1; justify-self: start; }
+            .zone-bas #panneauGains { order: 0; grid-column: 3; justify-self: end; }
+
+            .panneau {
+                width: clamp(200px, 19vw, 380px);
+                max-width: none;
+                font-size: clamp(13px, 1vw, 18px);
+            }
+
+            .panneau h3 {
+                font-size: clamp(12px, 1vw, 18px);
+            }
+
+            .historique {
+                position: absolute;
+                top: 30px;
+                left: 30px;
+                width: clamp(300px, 24vw, 460px);
+            }
+
+            .mise-rapide button {
+                font-size: clamp(15px, 1.1vw, 20px);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <img src="Logosite.png" alt="Casinodé" class="logo-titre">
+        
+        <!-- RECHERCHEZ ET MODIFIEZ CETTE LIGNE -->
+<div class="cagnotte-box" id="bandeauSolde">💰 Solde : <span id="valeurCagnotte">5</span> points</div>
+
+        
+        <div class="mise-section">
+            <label for="valeurMise">Combien voulez-vous parier ? </label>
+            <input type="number" id="valeurMise" min="1" value="1"> point(s)
+            <div class="mise-rapide">
+                <button type="button" data-mise="1">+1</button>
+                <button type="button" data-mise="5">+5</button>
+                <button type="button" data-mise="tout">Tout</button>
+            </div>
+        </div>
+        
+        <button id="boutonLancer">Lancer les dés !</button>
+        
+        <div id="messageFeedback"></div>
+        
+        <div class="zone-bas">
+        <aside class="panneau" id="panneauStats">
+            <h3>Statistiques</h3>
+            <ul class="liste-stats">
+                <li><span>Parties jouées</span> <strong id="statParties">0</strong></li>
+                <li><span>Victoires</span> <strong id="statVictoires">0</strong></li>
+                <li><span>Plus gros gain</span> <strong id="statGainMax">0</strong></li>
+                <li><span>Meilleur solde</span> <strong id="statSoldeMax">5</strong></li>
+            </ul>
+        </aside>
+
+        <div class="plateau">
+            <div class="zone-de">
+                <p>Dé 1</p>
+                <div class="scene">
+                    <div id="cubeDe1" class="cube">
+                        <div class="face face-1"><span class="point"></span></div>
+                        <div class="face face-2"><span class="point"></span><span class="point"></span></div>
+                        <div class="face face-3"><span class="point"></span><span class="point"></span><span class="point"></span></div>
+                        <div class="face face-4"><span class="point"></span><span class="point"></span><span class="point"></span><span class="point"></span></div>
+                        <div class="face face-5"><span class="point"></span><span class="point"></span><span class="point"></span><span class="point"></span><span class="point"></span></div>
+                        <div class="face face-6"><span class="point"></span><span class="point"></span><span class="point"></span><span class="point"></span><span class="point"></span><span class="point"></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="zone-de">
+                <p>Dé 2</p>
+                <div class="scene">
+                    <div id="cubeDe2" class="cube">
+                        <div class="face face-1"><span class="point"></span></div>
+                        <div class="face face-2"><span class="point"></span><span class="point"></span></div>
+                        <div class="face face-3"><span class="point"></span><span class="point"></span><span class="point"></span></div>
+                        <div class="face face-4"><span class="point"></span><span class="point"></span><span class="point"></span><span class="point"></span></div>
+                        <div class="face face-5"><span class="point"></span><span class="point"></span><span class="point"></span><span class="point"></span><span class="point"></span></div>
+                        <div class="face face-6"><span class="point"></span><span class="point"></span><span class="point"></span><span class="point"></span><span class="point"></span><span class="point"></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <aside class="panneau" id="panneauGains">
+            <h3>Gains possibles</h3>
+            <table class="table-gains">
+                <tr><td>Dé le plus fort</td><td>x2</td><td id="gainGagnant">2 pts</td></tr>
+                <tr><td>Chiffre exact</td><td>x5</td><td id="gainExact">5 pts</td></tr>
+                <tr><td>Somme exacte</td><td>x10</td><td id="gainTotal">10 pts</td></tr>
+            </table>
+        </aside>
+        </div>
+
+        <section class="paris-section">
+            <h3>Choisissez votre type de pari</h3>
+            
+            <div class="paris-row active" data-target="typeGagnant">
+                <input type="radio" id="typeGagnant" name="typeParis" value="gagnant" checked>
+                <label for="typeGagnant"><strong>Option 1 : Dé le plus fort</strong></label>
+                <span class="cote-badge">Cote x2</span>
+                <select id="choixDeGagnant">
+                    <option value="1">Dé 1</option>
+                    <option value="2">Dé 2</option>
+                </select>
+            </div>
+
+            <div class="paris-row" data-target="typeExact">
+                <input type="radio" id="typeExact" name="typeParis" value="exact">
+                <label for="typeExact"><strong>Option 2 : Chiffre exact</strong></label>
+                <span class="cote-badge">Cote x5</span>
+                <span>Le</span>
+                <select id="choixDeExact">
+                    <option value="1">Dé 1</option>
+                    <option value="2">Dé 2</option>
+                </select>
+                <span>sera un :</span>
+                <select id="valeurExact">
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                    <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                </select>
+            </div>
+
+            <div class="paris-row" data-target="typeTotal">
+                <input type="radio" id="typeTotal" name="typeParis" value="total">
+                <label for="typeTotal"><strong>Option 3 : Somme totale exacte</strong></label>
+                <span class="cote-badge">Cote x10</span>
+                <span>Total visé :</span>
+                <input type="number" id="valeurTotal" min="2" max="12" value="7" style="width: 55px;">
+            </div>
+        </section>
+
+        <aside class="panneau historique" id="panneauHistorique">
+            <h3>Derniers lancers</h3>
+            <ul id="listeHistorique"></ul>
+        </aside>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
